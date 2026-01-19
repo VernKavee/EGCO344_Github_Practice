@@ -1,0 +1,22 @@
+# --- macOS System Files (The most important part for you) ---
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# --- VS Code Settings ---
+.vscode/
+
+# --- Common Coding Junk ---
+# If you use Python
+__pycache__/
+*.pyc
+
+# If you use C/C++
+*.o
+*.out
+*.exe
+
+# If you use Node.js/Web
+node_modules/
+npm-debug.log
