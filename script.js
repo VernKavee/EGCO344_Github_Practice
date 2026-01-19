@@ -1,9 +1,12 @@
-// Global State
-let masterData = []; // Stores the merged data ONCE
-let currentData = []; // Stores the currently filtered/sorted data
-let sortDirection = 1; // 1 for asc, -1 for desc
+// --- Global State ---
+let masterData = []; 
+let currentData = [];
+let sortDirection = 1; 
 let lastSortCol = '';
+let barChartInstance = null;
+let pieChartInstance = null;
 
+// --- Load Data ---
 async function loadData() {
     try {
         const usersResponse = await fetch('electricity_users_en.json');
@@ -15,14 +18,13 @@ async function loadData() {
         const usagesTemp = await usagesResponse.json();
         const usagesData = usagesTemp.Sheet1 || usagesTemp;
 
-        // Optimized Merge (Do this only once)
+        // Merge Data
         masterData = usersData.map(user => {
             const usage = usagesData.find(u => u.province_code === user.province_code) || {};
-
-            // Pre-calculate business total
-            const totalBusiness = (usage.small_business_kwh || 0) +
-                (usage.medium_business_kwh || 0) +
-                (usage.large_business_kwh || 0);
+            
+            const totalBusiness = (usage.small_business_kwh || 0) + 
+                                  (usage.medium_business_kwh || 0) + 
+                                  (usage.large_business_kwh || 0);
 
             return { ...user, ...usage, total_business: totalBusiness };
         });
@@ -33,15 +35,18 @@ async function loadData() {
         updateUI();
 
     } catch (error) {
-        showError('Error loading data: ' + error.message + '. <br>Note: Make sure you are running this on a Local Server (localhost), not opening the file directly.');
+        showError('Error loading data: ' + error.message + '. <br>Note: Use Live Server!');
     }
 }
 
+// --- Main UI Updater ---
 function updateUI() {
     displayStats(currentData);
+    renderCharts(currentData);
     displayTable(currentData);
 }
 
+// --- Render Stats Cards ---
 function displayStats(data) {
     const stats = {
         totalUsers: data.reduce((sum, p) => sum + (p.residential_count || 0), 0),
@@ -70,18 +75,98 @@ function displayStats(data) {
     `;
 }
 
+// --- Render Table ---
 function displayTable(data) {
     const tbody = document.getElementById('tableBody');
     tbody.innerHTML = data.map(province => `
         <tr>
             <td><strong>${province.province_name}</strong></td>
             <td>${(province.residential_count || 0).toLocaleString()}</td>
-            <td>${(province.residential_kwh || 0).toLocaleString('en-US', { maximumFractionDigits: 0 })}</td>
-            <td>${(province.total_business).toLocaleString('en-US', { maximumFractionDigits: 0 })}</td>
+            <td>${(province.residential_kwh || 0).toLocaleString('en-US', {maximumFractionDigits: 0})}</td>
+            <td>${(province.total_business).toLocaleString('en-US', {maximumFractionDigits: 0})}</td>
             <td>${(province.ev_charging_kwh || 0).toLocaleString()}</td>
         </tr>
     `).join('');
 }
+
+// --- Render Charts (Bar & Pie) ---
+function renderCharts(data) {
+    // 1. Data Prep for Bar Chart (Top 10 Usage)
+    const topProvinces = [...data]
+        .sort((a, b) => {
+            const totalA = (a.residential_kwh || 0) + a.total_business + (a.ev_charging_kwh || 0);
+            const totalB = (b.residential_kwh || 0) + b.total_business + (b.ev_charging_kwh || 0);
+            return totalB - totalA;
+        })
+        .slice(0, 10);
+
+    const barLabels = topProvinces.map(p => p.province_name);
+    const barData = topProvinces.map(p => (
+        (p.residential_kwh || 0) + p.total_business + (p.ev_charging_kwh || 0)
+    ));
+
+    // 2. Data Prep for Pie Chart
+    const totalRes = data.reduce((sum, p) => sum + (p.residential_kwh || 0), 0);
+    const totalBus = data.reduce((sum, p) => sum + p.total_business, 0);
+    const totalEV = data.reduce((sum, p) => sum + (p.ev_charging_kwh || 0), 0);
+
+    // --- Render Bar ---
+    const ctxBar = document.getElementById('topProvincesChart').getContext('2d');
+    if (barChartInstance) barChartInstance.destroy();
+
+    barChartInstance = new Chart(ctxBar, {
+        type: 'bar',
+        data: {
+            labels: barLabels,
+            datasets: [{
+                label: 'Total Usage (kWh)',
+                data: barData,
+                backgroundColor: '#667eea',
+                borderRadius: 5
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                title: { display: true, text: 'Top 10 Provinces by Usage', font: {size: 16} },
+                legend: { display: false }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: { callback: function(val) { return (val / 1e6).toFixed(0) + 'M'; } }
+                }
+            }
+        }
+    });
+
+    // --- Render Pie ---
+    const ctxPie = document.getElementById('usageDistributionChart').getContext('2d');
+    if (pieChartInstance) pieChartInstance.destroy();
+
+    pieChartInstance = new Chart(ctxPie, {
+        type: 'doughnut',
+        data: {
+            labels: ['Residential', 'Business', 'EV Charging'],
+            datasets: [{
+                data: [totalRes, totalBus, totalEV],
+                backgroundColor: ['#3b82f6', '#10b981', '#f59e0b'],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                title: { display: true, text: 'Usage Distribution (kWh)', font: {size: 16} },
+                legend: { position: 'bottom' }
+            }
+        }
+    });
+}
+
+// --- Filtering & Sorting Helpers ---
 
 function populateProvinceSelect() {
     const select = document.getElementById('provinceSelect');
@@ -108,30 +193,22 @@ function filterData() {
 }
 
 function sortTable(key) {
-    // 1. Logic to determine direction
     if (lastSortCol === key) {
         sortDirection *= -1;
     } else {
-        sortDirection = 1; // Default to ascending for new column
+        sortDirection = 1;
         lastSortCol = key;
     }
 
-    // 2. Sort the data
     currentData.sort((a, b) => {
         let valA = a[key] || 0;
         let valB = b[key] || 0;
-
-        if (typeof valA === 'string') {
-            return sortDirection * valA.localeCompare(valB);
-        }
+        if (typeof valA === 'string') return sortDirection * valA.localeCompare(valB);
         return sortDirection * (valA - valB);
     });
 
-    // 3. Update the Arrows visually
     updateSortIcons(key, sortDirection);
-
-    // 4. Re-render table
-    displayTable(currentData);
+    displayTable(currentData); // Note: We only update table here, not charts, to save performance
 }
 
 function updateSortIcons(activeKey, direction) {
@@ -143,7 +220,7 @@ function updateSortIcons(activeKey, direction) {
 
     const activeArrow = document.getElementById('arrow-' + activeKey);
     if (activeArrow) {
-        activeArrow.textContent = direction === 1 ? '↑' : '↓'; 
+        activeArrow.textContent = direction === 1 ? '↑' : '↓';
         activeArrow.classList.add('active');
     }
 }
@@ -152,11 +229,9 @@ function resetFilters() {
     document.getElementById('provinceSelect').value = '';
     document.getElementById('searchInput').value = '';
     
-    // Reset sort state
     sortDirection = 1;
     lastSortCol = '';
     
-    // Reset arrows
     const allArrows = document.querySelectorAll('.sort-arrow');
     allArrows.forEach(span => {
         span.textContent = '↕';
@@ -171,9 +246,9 @@ function showError(message) {
     document.getElementById('errorMessage').innerHTML = `<div class="error">${message}</div>`;
 }
 
-// Event Listeners
+// --- Event Listeners ---
 document.getElementById('provinceSelect').addEventListener('change', filterData);
 document.getElementById('searchInput').addEventListener('input', filterData);
 
-// Init
+// --- Init ---
 loadData();

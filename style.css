@@ -59,6 +59,7 @@ button:hover {
     background: #764ba2;
 }
 
+/* --- Stats Grid --- */
 .stats-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -88,6 +89,24 @@ button:hover {
     color: #667eea;
 }
 
+/* --- Charts Container --- */
+.charts-container {
+    display: grid;
+    grid-template-columns: 2fr 1fr; /* Bar chart takes more space */
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.chart-wrapper {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    height: 400px; /* Fixed height for consistency */
+    position: relative;
+}
+
+/* --- Table --- */
 .data-table {
     background: white;
     border-radius: 10px;
@@ -101,7 +120,7 @@ table {
 }
 
 th {
-    background: #312e81; /* Deep Indigo */
+    background: #312e81; /* Deep Indigo for high contrast */
     color: #ffffff;
     padding: 15px;
     text-align: left;
@@ -135,25 +154,32 @@ tr:hover {
     margin-bottom: 20px;
 }
 
-/* Sorting Arrows */
+/* --- Sort Arrows --- */
 .sort-arrow {
     display: inline-block;
     margin-left: 5px;
-    color: #818cf8; /* Light indigo for inactive state */
+    color: #818cf8;
     font-weight: normal;
     font-size: 0.9em;
 }
 
 .sort-arrow.active {
-    color: white; /* Bright white for active state */
+    color: white;
     font-weight: bold;
+}
+
+/* --- Responsive --- */
+@media (max-width: 900px) {
+    .charts-container {
+        grid-template-columns: 1fr; /* Stack charts on smaller screens */
+        height: auto;
+    }
 }
 
 @media (max-width: 768px) {
     .controls {
         flex-direction: column;
     }
-
     .stats-grid {
         grid-template-columns: 1fr;
     }

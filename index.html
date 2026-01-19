@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Electricity Dashboard - Thailand</title>
     
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -22,7 +24,17 @@
         </header>
 
         <div id="errorMessage"></div>
+        
         <div class="stats-grid" id="statsGrid"></div>
+
+        <div class="charts-container">
+            <div class="chart-wrapper">
+                <canvas id="topProvincesChart"></canvas>
+            </div>
+            <div class="chart-wrapper">
+                <canvas id="usageDistributionChart"></canvas>
+            </div>
+        </div>
 
         <div class="data-table">
             <table id="dataTable">
