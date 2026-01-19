@@ -1,37 +1,174 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Electricity Dashboard - Thailand</title>
     <style>
         /* [ ... Keep your existing CSS, it is excellent ... ] */
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 20px; }
-        .container { max-width: 1400px; margin: 0 auto; }
-        header { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 30px; }
-        header h1 { color: #667eea; margin-bottom: 10px; }
-        .controls { display: flex; gap: 15px; flex-wrap: wrap; margin-top: 20px; }
-        select, input { padding: 10px 15px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px; }
-        button { padding: 10px 20px; background: #667eea; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: 600; transition: background 0.3s; }
-        button:hover { background: #764ba2; }
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 30px; }
-        .stat-card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-left: 5px solid #667eea; }
-        .stat-card h3 { color: #666; font-size: 14px; font-weight: 600; margin-bottom: 10px; text-transform: uppercase; }
-        .stat-card .value { font-size: 28px; font-weight: bold; color: #667eea; }
-        .data-table { background: white; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; }
-        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+        }
+
+        header h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+
+        select,
+        input {
+            padding: 10px 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        button {
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+
+        button:hover {
+            background: #764ba2;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border-left: 5px solid #667eea;
+        }
+
+        .stat-card h3 {
+            color: #666;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+
+        .stat-card .value {
+            font-size: 28px;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .data-table {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
         /* UPDATED: Added cursor pointer and hover effect for sorting */
-        th { background: #667eea; color: white; padding: 15px; text-align: left; font-weight: 600; position: sticky; top: 0; cursor: pointer; user-select: none; }
-        th:hover { background: #5a6fd6; }
-        
-        td { padding: 12px 15px; border-bottom: 1px solid #eee; }
-        tr:hover { background: #f9f9f9; }
-        .error { background: #ff6b6b; color: white; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
-        @media (max-width: 768px) { .controls { flex-direction: column; } .stats-grid { grid-template-columns: 1fr; } }
+        th {
+            background: #667eea;
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        th:hover {
+            background: #5a6fd6;
+        }
+
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #eee;
+        }
+
+        tr:hover {
+            background: #f9f9f9;
+        }
+
+        .error {
+            background: #ff6b6b;
+            color: white;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .controls {
+                flex-direction: column;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Add this to your existing CSS */
+        .sort-arrow {
+            display: inline-block;
+            margin-left: 5px;
+            color: #ccc;
+            /* Light gray for inactive */
+            font-weight: normal;
+        }
+
+        .sort-arrow.active {
+            color: white;
+            /* Bright white for the active sorted column */
+        }
     </style>
 </head>
+
 <body>
     <div class="container">
         <header>
@@ -53,11 +190,21 @@
             <table id="dataTable">
                 <thead>
                     <tr>
-                        <th onclick="sortTable('province_name')">Province ↕</th>
-                        <th onclick="sortTable('residential_count')">Users ↕</th>
-                        <th onclick="sortTable('residential_kwh')">Residential (kWh) ↕</th>
-                        <th onclick="sortTable('total_business')">Business (kWh) ↕</th>
-                        <th onclick="sortTable('ev_charging_kwh')">EV Charging (kWh) ↕</th>
+                        <th onclick="sortTable('province_name')">
+                            Province <span id="arrow-province_name" class="sort-arrow">↕</span>
+                        </th>
+                        <th onclick="sortTable('residential_count')">
+                            Users <span id="arrow-residential_count" class="sort-arrow">↕</span>
+                        </th>
+                        <th onclick="sortTable('residential_kwh')">
+                            Residential (kWh) <span id="arrow-residential_kwh" class="sort-arrow">↕</span>
+                        </th>
+                        <th onclick="sortTable('total_business')">
+                            Business (kWh) <span id="arrow-total_business" class="sort-arrow">↕</span>
+                        </th>
+                        <th onclick="sortTable('ev_charging_kwh')">
+                            EV Charging (kWh) <span id="arrow-ev_charging_kwh" class="sort-arrow">↕</span>
+                        </th>
                     </tr>
                 </thead>
                 <tbody id="tableBody"></tbody>
@@ -87,11 +234,11 @@
                 // 2. Optimized Merge (Do this only once)
                 masterData = usersData.map(user => {
                     const usage = usagesData.find(u => u.province_code === user.province_code) || {};
-                    
+
                     // Pre-calculate business total for easier sorting/filtering
-                    const totalBusiness = (usage.small_business_kwh || 0) + 
-                                        (usage.medium_business_kwh || 0) + 
-                                        (usage.large_business_kwh || 0);
+                    const totalBusiness = (usage.small_business_kwh || 0) +
+                        (usage.medium_business_kwh || 0) +
+                        (usage.large_business_kwh || 0);
 
                     return { ...user, ...usage, total_business: totalBusiness };
                 });
@@ -146,8 +293,8 @@
                 <tr>
                     <td><strong>${province.province_name}</strong></td>
                     <td>${(province.residential_count || 0).toLocaleString()}</td>
-                    <td>${(province.residential_kwh || 0).toLocaleString('en-US', {maximumFractionDigits: 0})}</td>
-                    <td>${(province.total_business).toLocaleString('en-US', {maximumFractionDigits: 0})}</td>
+                    <td>${(province.residential_kwh || 0).toLocaleString('en-US', { maximumFractionDigits: 0 })}</td>
+                    <td>${(province.total_business).toLocaleString('en-US', { maximumFractionDigits: 0 })}</td>
                     <td>${(province.ev_charging_kwh || 0).toLocaleString()}</td>
                 </tr>
             `).join('');
@@ -179,7 +326,7 @@
         }
 
         function sortTable(key) {
-            // Toggle direction if clicking the same column
+            // 1. Logic to determine direction
             if (lastSortCol === key) {
                 sortDirection *= -1;
             } else {
@@ -187,19 +334,38 @@
                 lastSortCol = key;
             }
 
-            // Sort logic
+            // 2. Sort the data
             currentData.sort((a, b) => {
                 let valA = a[key] || 0;
                 let valB = b[key] || 0;
 
-                // Handle string sorting (Province Name) vs Number sorting
                 if (typeof valA === 'string') {
                     return sortDirection * valA.localeCompare(valB);
                 }
                 return sortDirection * (valA - valB);
             });
 
+            // 3. Update the Arrows visually
+            updateSortIcons(key, sortDirection);
+
+            // 4. Re-render table
             displayTable(currentData);
+        }
+
+        function updateSortIcons(activeKey, direction) {
+            // First, reset ALL arrows to default state
+            const allArrows = document.querySelectorAll('.sort-arrow');
+            allArrows.forEach(span => {
+                span.textContent = '↕';
+                span.classList.remove('active');
+            });
+
+            // Then, update only the clicked arrow
+            const activeArrow = document.getElementById('arrow-' + activeKey);
+            if (activeArrow) {
+                activeArrow.textContent = direction === 1 ? '↑' : '↓'; // Up arrow for Asc, Down for Desc
+                activeArrow.classList.add('active');
+            }
         }
 
         function resetFilters() {
@@ -221,4 +387,5 @@
         loadData();
     </script>
 </body>
+
 </html>
