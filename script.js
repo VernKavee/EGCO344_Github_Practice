@@ -18,18 +18,14 @@ async function loadData() {
         const usagesTemp = await usagesResponse.json();
         const usagesData = usagesTemp.Sheet1 || usagesTemp;
 
-        // Merge Data
         masterData = usersData.map(user => {
             const usage = usagesData.find(u => u.province_code === user.province_code) || {};
-            
             const totalBusiness = (usage.small_business_kwh || 0) + 
                                   (usage.medium_business_kwh || 0) + 
                                   (usage.large_business_kwh || 0);
-
             return { ...user, ...usage, total_business: totalBusiness };
         });
 
-        // Initialize
         currentData = [...masterData];
         populateProvinceSelect();
         updateUI();
@@ -91,7 +87,6 @@ function displayTable(data) {
 
 // --- Render Charts ---
 function renderCharts(data) {
-    // 1. Data Prep for Bar Chart
     const topProvinces = [...data]
         .sort((a, b) => {
             const totalA = (a.residential_kwh || 0) + a.total_business + (a.ev_charging_kwh || 0);
@@ -101,59 +96,65 @@ function renderCharts(data) {
         .slice(0, 10);
 
     const barLabels = topProvinces.map(p => p.province_name);
-    const barData = topProvinces.map(p => (
-        (p.residential_kwh || 0) + p.total_business + (p.ev_charging_kwh || 0)
-    ));
+    const barData = topProvinces.map(p => ((p.residential_kwh || 0) + p.total_business + (p.ev_charging_kwh || 0)));
 
-    // 2. Data Prep for Pie Chart
     const totalRes = data.reduce((sum, p) => sum + (p.residential_kwh || 0), 0);
     const totalBus = data.reduce((sum, p) => sum + p.total_business, 0);
     const totalEV = data.reduce((sum, p) => sum + (p.ev_charging_kwh || 0), 0);
 
-    // Render Bar
+    // Dynamic Chart Colors based on Theme
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    const textColor = isDark ? '#e2e8f0' : '#334155';
+    const barColor = isDark ? '#60a5fa' : '#2563eb';
+
     const ctxBar = document.getElementById('topProvincesChart').getContext('2d');
     if (barChartInstance) barChartInstance.destroy();
+    
     barChartInstance = new Chart(ctxBar, {
         type: 'bar',
         data: {
             labels: barLabels,
-            datasets: [{
-                label: 'Total Usage (kWh)',
-                data: barData,
-                backgroundColor: '#667eea',
-                borderRadius: 5
-            }]
+            datasets: [{ label: 'Total Usage (kWh)', data: barData, backgroundColor: barColor, borderRadius: 4 }]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            plugins: { title: { display: true, text: 'Top 10 Provinces by Usage', font: {size: 16} }, legend: { display: false } },
-            scales: { y: { beginAtZero: true, ticks: { callback: function(val) { return (val / 1e6).toFixed(0) + 'M'; } } } }
+            plugins: { 
+                title: { display: true, text: 'Top 10 Provinces by Usage', color: textColor, font: {size: 16} }, 
+                legend: { display: false } 
+            },
+            scales: { 
+                y: { ticks: { color: textColor, callback: val => (val / 1e6).toFixed(0) + 'M' }, grid: { color: isDark ? '#334155' : '#e2e8f0' } },
+                x: { ticks: { color: textColor }, grid: { display: false } }
+            }
         }
     });
 
-    // Render Pie
     const ctxPie = document.getElementById('usageDistributionChart').getContext('2d');
     if (pieChartInstance) pieChartInstance.destroy();
+    
     pieChartInstance = new Chart(ctxPie, {
         type: 'doughnut',
         data: {
             labels: ['Residential', 'Business', 'EV Charging'],
             datasets: [{
                 data: [totalRes, totalBus, totalEV],
-                backgroundColor: ['#3b82f6', '#10b981', '#f59e0b'],
+                backgroundColor: ['#3b82f6', '#10b981', '#f59e0b'], // Blue, Green, Orange
                 borderWidth: 0
             }]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            plugins: { title: { display: true, text: 'Usage Distribution (kWh)', font: {size: 16} }, legend: { position: 'bottom' } }
+            plugins: { 
+                title: { display: true, text: 'Usage Distribution (kWh)', color: textColor, font: {size: 16} }, 
+                legend: { position: 'bottom', labels: { color: textColor } } 
+            }
         }
     });
 }
 
-// --- Helpers ---
+// --- Filtering & Logic ---
 function populateProvinceSelect() {
     const select = document.getElementById('provinceSelect');
     const provinces = [...new Set(masterData.map(p => p.province_name))].sort();
@@ -168,7 +169,6 @@ function populateProvinceSelect() {
 function filterData() {
     const province = document.getElementById('provinceSelect').value;
     const search = document.getElementById('searchInput').value.toLowerCase();
-
     currentData = masterData.filter(p => {
         const matchesProvince = province ? p.province_name === province : true;
         const matchesSearch = p.province_name.toLowerCase().includes(search);
@@ -178,12 +178,8 @@ function filterData() {
 }
 
 function sortTable(key) {
-    if (lastSortCol === key) {
-        sortDirection *= -1;
-    } else {
-        sortDirection = 1;
-        lastSortCol = key;
-    }
+    if (lastSortCol === key) sortDirection *= -1;
+    else { sortDirection = 1; lastSortCol = key; }
 
     currentData.sort((a, b) => {
         let valA = a[key] || 0;
@@ -191,14 +187,12 @@ function sortTable(key) {
         if (typeof valA === 'string') return sortDirection * valA.localeCompare(valB);
         return sortDirection * (valA - valB);
     });
-
     updateSortIcons(key, sortDirection);
     displayTable(currentData);
 }
 
 function updateSortIcons(activeKey, direction) {
-    const allArrows = document.querySelectorAll('.sort-arrow');
-    allArrows.forEach(span => { span.textContent = '↕'; span.classList.remove('active'); });
+    document.querySelectorAll('.sort-arrow').forEach(span => { span.textContent = '↕'; span.classList.remove('active'); });
     const activeArrow = document.getElementById('arrow-' + activeKey);
     if (activeArrow) { activeArrow.textContent = direction === 1 ? '↑' : '↓'; activeArrow.classList.add('active'); }
 }
@@ -208,38 +202,62 @@ function resetFilters() {
     document.getElementById('searchInput').value = '';
     sortDirection = 1;
     lastSortCol = '';
-    const allArrows = document.querySelectorAll('.sort-arrow');
-    allArrows.forEach(span => { span.textContent = '↕'; span.classList.remove('active'); });
+    document.querySelectorAll('.sort-arrow').forEach(span => { span.textContent = '↕'; span.classList.remove('active'); });
     currentData = [...masterData];
     updateUI();
 }
 
 function showError(message) { document.getElementById('errorMessage').innerHTML = `<div class="error">${message}</div>`; }
 
-// --- Theme Toggle Logic ---
+// ==========================================
+// --- NEW THEME LOGIC (Auto-Detect) ---
+// ==========================================
+
 const themeToggleBtn = document.getElementById('themeToggle');
 const htmlElement = document.documentElement;
 
-// Check LocalStorage
-const savedTheme = localStorage.getItem('theme');
-if (savedTheme) {
-    htmlElement.setAttribute('data-theme', savedTheme);
-    updateIcon(savedTheme);
+// 1. Function to apply theme
+function applyTheme(theme) {
+    htmlElement.setAttribute('data-theme', theme);
+    localStorage.setItem('theme', theme);
+    themeToggleBtn.textContent = theme === 'dark' ? '☀️ Light Mode' : '🌙 Dark Mode';
+    
+    // Re-render charts to update text colors
+    if(currentData.length > 0) renderCharts(currentData); 
 }
 
+// 2. Determine initial theme
+function initTheme() {
+    const savedTheme = localStorage.getItem('theme');
+    
+    if (savedTheme) {
+        // A. User has explicitly saved a preference
+        applyTheme(savedTheme);
+    } else {
+        // B. No preference saved, use Device System Settings
+        const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        applyTheme(systemPrefersDark ? 'dark' : 'light');
+    }
+}
+
+// 3. Listen for System Changes (if user hasn't manually overridden yet, or just to be responsive)
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+    // Only auto-switch if the user hasn't explicitly clicked the toggle button before
+    // (Or you can choose to always respect system. Here we respect system if no localStorage exists)
+    if (!localStorage.getItem('theme')) {
+        applyTheme(e.matches ? 'dark' : 'light');
+    }
+});
+
+// 4. Manual Toggle Button
 themeToggleBtn.addEventListener('click', () => {
     const currentTheme = htmlElement.getAttribute('data-theme');
     const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-    htmlElement.setAttribute('data-theme', newTheme);
-    localStorage.setItem('theme', newTheme);
-    updateIcon(newTheme);
+    applyTheme(newTheme);
 });
-
-function updateIcon(theme) {
-    themeToggleBtn.textContent = theme === 'dark' ? '☀️' : '🌙';
-}
 
 // Event Listeners & Init
 document.getElementById('provinceSelect').addEventListener('change', filterData);
 document.getElementById('searchInput').addEventListener('input', filterData);
+initTheme(); // Run theme check immediately
 loadData();
