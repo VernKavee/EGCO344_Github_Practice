@@ -109,10 +109,12 @@
             border-collapse: collapse;
         }
 
-        /* UPDATED: Added cursor pointer and hover effect for sorting */
+        /* Find your existing th and th:hover styles and replace them with this: */
+
         th {
-            background: #667eea;
-            color: white;
+            background: #312e81;
+            /* Changed from light purple to Deep Indigo for high contrast */
+            color: #ffffff;
             padding: 15px;
             text-align: left;
             font-weight: 600;
@@ -120,10 +122,15 @@
             top: 0;
             cursor: pointer;
             user-select: none;
+            transition: background 0.2s;
+            /* Added smooth transition for hover */
+            border-bottom: 2px solid #1e1b4b;
+            /* Adds a subtle dark border for depth */
         }
 
         th:hover {
-            background: #5a6fd6;
+            background: #4338ca;
+            /* Lighter indigo when you mouse over it */
         }
 
         td {
