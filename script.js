@@ -46,7 +46,7 @@ function updateUI() {
     displayTable(currentData);
 }
 
-// --- Render Stats Cards ---
+// --- Render Stats ---
 function displayStats(data) {
     const stats = {
         totalUsers: data.reduce((sum, p) => sum + (p.residential_count || 0), 0),
@@ -89,9 +89,9 @@ function displayTable(data) {
     `).join('');
 }
 
-// --- Render Charts (Bar & Pie) ---
+// --- Render Charts ---
 function renderCharts(data) {
-    // 1. Data Prep for Bar Chart (Top 10 Usage)
+    // 1. Data Prep for Bar Chart
     const topProvinces = [...data]
         .sort((a, b) => {
             const totalA = (a.residential_kwh || 0) + a.total_business + (a.ev_charging_kwh || 0);
@@ -110,10 +110,9 @@ function renderCharts(data) {
     const totalBus = data.reduce((sum, p) => sum + p.total_business, 0);
     const totalEV = data.reduce((sum, p) => sum + (p.ev_charging_kwh || 0), 0);
 
-    // --- Render Bar ---
+    // Render Bar
     const ctxBar = document.getElementById('topProvincesChart').getContext('2d');
     if (barChartInstance) barChartInstance.destroy();
-
     barChartInstance = new Chart(ctxBar, {
         type: 'bar',
         data: {
@@ -128,23 +127,14 @@ function renderCharts(data) {
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            plugins: {
-                title: { display: true, text: 'Top 10 Provinces by Usage', font: {size: 16} },
-                legend: { display: false }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: { callback: function(val) { return (val / 1e6).toFixed(0) + 'M'; } }
-                }
-            }
+            plugins: { title: { display: true, text: 'Top 10 Provinces by Usage', font: {size: 16} }, legend: { display: false } },
+            scales: { y: { beginAtZero: true, ticks: { callback: function(val) { return (val / 1e6).toFixed(0) + 'M'; } } } }
         }
     });
 
-    // --- Render Pie ---
+    // Render Pie
     const ctxPie = document.getElementById('usageDistributionChart').getContext('2d');
     if (pieChartInstance) pieChartInstance.destroy();
-
     pieChartInstance = new Chart(ctxPie, {
         type: 'doughnut',
         data: {
@@ -158,16 +148,12 @@ function renderCharts(data) {
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            plugins: {
-                title: { display: true, text: 'Usage Distribution (kWh)', font: {size: 16} },
-                legend: { position: 'bottom' }
-            }
+            plugins: { title: { display: true, text: 'Usage Distribution (kWh)', font: {size: 16} }, legend: { position: 'bottom' } }
         }
     });
 }
 
-// --- Filtering & Sorting Helpers ---
-
+// --- Helpers ---
 function populateProvinceSelect() {
     const select = document.getElementById('provinceSelect');
     const provinces = [...new Set(masterData.map(p => p.province_name))].sort();
@@ -188,7 +174,6 @@ function filterData() {
         const matchesSearch = p.province_name.toLowerCase().includes(search);
         return matchesProvince && matchesSearch;
     });
-
     updateUI();
 }
 
@@ -208,47 +193,53 @@ function sortTable(key) {
     });
 
     updateSortIcons(key, sortDirection);
-    displayTable(currentData); // Note: We only update table here, not charts, to save performance
+    displayTable(currentData);
 }
 
 function updateSortIcons(activeKey, direction) {
     const allArrows = document.querySelectorAll('.sort-arrow');
-    allArrows.forEach(span => {
-        span.textContent = '↕';
-        span.classList.remove('active');
-    });
-
+    allArrows.forEach(span => { span.textContent = '↕'; span.classList.remove('active'); });
     const activeArrow = document.getElementById('arrow-' + activeKey);
-    if (activeArrow) {
-        activeArrow.textContent = direction === 1 ? '↑' : '↓';
-        activeArrow.classList.add('active');
-    }
+    if (activeArrow) { activeArrow.textContent = direction === 1 ? '↑' : '↓'; activeArrow.classList.add('active'); }
 }
 
 function resetFilters() {
     document.getElementById('provinceSelect').value = '';
     document.getElementById('searchInput').value = '';
-    
     sortDirection = 1;
     lastSortCol = '';
-    
     const allArrows = document.querySelectorAll('.sort-arrow');
-    allArrows.forEach(span => {
-        span.textContent = '↕';
-        span.classList.remove('active');
-    });
-
+    allArrows.forEach(span => { span.textContent = '↕'; span.classList.remove('active'); });
     currentData = [...masterData];
     updateUI();
 }
 
-function showError(message) {
-    document.getElementById('errorMessage').innerHTML = `<div class="error">${message}</div>`;
+function showError(message) { document.getElementById('errorMessage').innerHTML = `<div class="error">${message}</div>`; }
+
+// --- Theme Toggle Logic ---
+const themeToggleBtn = document.getElementById('themeToggle');
+const htmlElement = document.documentElement;
+
+// Check LocalStorage
+const savedTheme = localStorage.getItem('theme');
+if (savedTheme) {
+    htmlElement.setAttribute('data-theme', savedTheme);
+    updateIcon(savedTheme);
 }
 
-// --- Event Listeners ---
+themeToggleBtn.addEventListener('click', () => {
+    const currentTheme = htmlElement.getAttribute('data-theme');
+    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    htmlElement.setAttribute('data-theme', newTheme);
+    localStorage.setItem('theme', newTheme);
+    updateIcon(newTheme);
+});
+
+function updateIcon(theme) {
+    themeToggleBtn.textContent = theme === 'dark' ? '☀️' : '🌙';
+}
+
+// Event Listeners & Init
 document.getElementById('provinceSelect').addEventListener('change', filterData);
 document.getElementById('searchInput').addEventListener('input', filterData);
-
-// --- Init ---
 loadData();

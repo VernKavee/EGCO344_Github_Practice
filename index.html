@@ -12,15 +12,22 @@
 <body>
     <div class="container">
         <header>
-            <h1>⚡ Electricity Dashboard - Thailand Provinces</h1>
-            <p>Year 2566 (2023)</p>
-            <div class="controls">
-                <select id="provinceSelect">
-                    <option value="">All Provinces</option>
-                </select>
-                <input type="text" id="searchInput" placeholder="Search province...">
-                <button onclick="resetFilters()">Reset Filters</button>
+            <div class="header-content">
+                <h1>⚡ Electricity Dashboard</h1>
+                <p>Thailand Provinces • Year 2566 (2023)</p>
+                
+                <div class="controls">
+                    <select id="provinceSelect">
+                        <option value="">All Provinces</option>
+                    </select>
+                    <input type="text" id="searchInput" placeholder="Search province...">
+                    <button class="action-btn" onclick="resetFilters()">Reset</button>
+                </div>
             </div>
+            
+            <button id="themeToggle" class="theme-toggle-btn" title="Toggle Dark Mode">
+                🌙
+            </button>
         </header>
 
         <div id="errorMessage"></div>
